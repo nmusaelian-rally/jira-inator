@@ -29,13 +29,13 @@ const fields = async (issueType) => {
     return data["projects"][0]["issuetypes"][0]
 }
 
-const requestBody = async (issueType) => {
+const requestBody = async (issueType, idx) => {
     let body = {} 
     let issueInfo = await fields(issueType)
     console.log(issueInfo["name"])
     if (issueInfo["name"] == 'Story'){
         body = {"fields":{"project":{"key": "FAN"}, 
-        "summary": "Story made with Insomnia",
+        "summary": `Story ${idx} via REST`,
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueInfo["name"] == 'Epic'){
@@ -45,8 +45,8 @@ const requestBody = async (issueType) => {
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": "FAN"}, 
-                         [val]: "e0004",
-                         "summary": "One more epic made with Insomnia",
+                         [val]: `Epic ${idx}`,
+                         "summary": `Epic ${idx}`,
                          "description": "Creating an Epic via REST",
                          "issuetype": {"name": "Epic"}}}
             }
@@ -67,6 +67,29 @@ const createIssue = async (body = {}) => {
     return response.json(); 
   }
 
-requestBody(epic).then(createIssue)
+  const deleteIssues = async (index) => {
+    try{
+        deleteUrl = `${baseUrl}/${config['projectKey']}-${index}`
+        const response = await fetch(deleteUrl, {
+          method: 'DELETE', 
+          mode: 'cors', 
+          cache: 'no-cache', 
+          credentials: 'same-origin', 
+          headers: headers
+        });
+        return response.text; 
+    } catch(err){
+        console.log(err)
+    }
+  }
+
+  for (i = 0; i < 1000; i++) {
+    requestBody(epic, i).then(createIssue)
+  }
+
+  
 //requestBody(story).then(createIssue)
+
+
+
 
