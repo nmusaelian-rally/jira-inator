@@ -15,7 +15,6 @@ var headers = {
 
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
-    
     let params = {projectKey: config['projectKey'], issuetypeNames: issueType, expand: 'projects.issuetypes.fields'}
     let url  = `${baseUrl}/${endpoint}${URL.format({ query: params })}` 
     return url
@@ -23,7 +22,7 @@ const queryURL = (issueType) => {
 
 const fields = async (issueType) => {
     let url = queryURL(issueType)
-    console.log(url)
+    //console.log(url)
     let response = await fetch(url, {headers: headers})
     let data = await response.json()
     return data["projects"][0]["issuetypes"][0]
@@ -32,7 +31,7 @@ const fields = async (issueType) => {
 const requestBody = async (issueType, idx) => {
     let body = {} 
     let issueInfo = await fields(issueType)
-    console.log(issueInfo["name"])
+    //console.log(issueInfo["name"])
     if (issueInfo["name"] == 'Story'){
         body = {"fields":{"project":{"key": "FAN"}, 
         "summary": `Story ${idx} via REST`,
@@ -83,7 +82,7 @@ const createIssue = async (body = {}) => {
     }
   }
 
-  for (i = 0; i < 1000; i++) {
+  for (i = 0; i < 10000; i++) {
     requestBody(epic, i).then(createIssue)
   }
 
