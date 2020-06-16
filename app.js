@@ -13,6 +13,8 @@ var headers = {
     'Authorization': 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64')
 }
 
+//const cashedIssueInfo = {[epic]: undefined, [story]: undefined}
+
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
     let params = {projectKey: config['projectKey'], issuetypeNames: issueType, expand: 'projects.issuetypes.fields'}
@@ -20,7 +22,7 @@ const queryURL = (issueType) => {
     return url
 }
 
-const fields = async (issueType) => {
+const getIssueInfo = async (issueType) => {
     let url = queryURL(issueType)
     //console.log(url)
     let response = await fetch(url, {headers: headers})
@@ -28,13 +30,14 @@ const fields = async (issueType) => {
     return data["projects"][0]["issuetypes"][0]
 }
 
-const requestBody = async (issueType, idx) => {
+const requestBody = async (issueType) => {
     let body = {} 
-    let issueInfo = await fields(issueType)
+    let issueInfo = await getIssueInfo(issueType)
     //console.log(issueInfo["name"])
+    let timestamp = Date.now()
     if (issueInfo["name"] == 'Story'){
         body = {"fields":{"project":{"key": "FAN"}, 
-        "summary": `Story ${idx} via REST`,
+        "summary": `Story ${timestamp} via REST`,
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueInfo["name"] == 'Epic'){
@@ -44,8 +47,8 @@ const requestBody = async (issueType, idx) => {
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": "FAN"}, 
-                         [val]: `Epic ${idx}`,
-                         "summary": `Epic ${idx}`,
+                         [val]: `Epic?! ${timestamp}`,
+                         "summary": `Epic?! ${timestamp}`,
                          "description": "Creating an Epic via REST",
                          "issuetype": {"name": "Epic"}}}
             }
@@ -55,15 +58,19 @@ const requestBody = async (issueType, idx) => {
 }
 
 const createIssue = async (body = {}) => {
-    const response = await fetch(baseUrl, {
-      method: 'POST', 
-      mode: 'cors', 
-      cache: 'no-cache', 
-      credentials: 'same-origin', 
-      headers: headers,
-      body: JSON.stringify(body) 
-    });
-    return response.json(); 
+    try{
+        const response = await fetch(baseUrl, {
+            method: 'POST', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(body) 
+          });
+        return response.json(); 
+    }catch{
+      console.log(err)
+    }
   }
 
   const deleteIssues = async (index) => {
@@ -82,10 +89,12 @@ const createIssue = async (body = {}) => {
     }
   }
 
-  for (i = 0; i < 10000; i++) {
-    requestBody(epic, i).then(createIssue)
+  for (i = 0; i < 1000; i++) {
+    requestBody(epic).then(createIssue)
+    if (i % 100 == 0){
+        console.log(`posting ${i}th ${epic}...`)
+    }
   }
-
   
 //requestBody(story).then(createIssue)
 
