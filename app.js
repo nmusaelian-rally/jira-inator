@@ -13,7 +13,7 @@ var headers = {
     'Authorization': 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64')
 }
 
-//const cashedIssueInfo = {[epic]: undefined, [story]: undefined}
+let cashedIssueInfo = {}
 
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
@@ -22,33 +22,38 @@ const queryURL = (issueType) => {
     return url
 }
 
-const getIssueInfo = async (issueType) => {
+
+const saveIssueInfo = async (issueType) => {
     let url = queryURL(issueType)
-    //console.log(url)
-    let response = await fetch(url, {headers: headers})
-    let data = await response.json()
-    return data["projects"][0]["issuetypes"][0]
+    if (!cashedIssueInfo.hasOwnProperty(issueType)){
+        //console.log('fetching from server')
+        let response = await fetch(url, {headers: headers})
+        let data = await response.json()
+        cashedIssueInfo[issueType] = data["projects"][0]["issuetypes"][0]
+    }else{
+        //console.log('fetching from cache')
+    }
+    return cashedIssueInfo[issueType]
 }
 
 const requestBody = async (issueType) => {
     let body = {} 
-    let issueInfo = await getIssueInfo(issueType)
-    //console.log(issueInfo["name"])
+    await saveIssueInfo(issueType)
     let timestamp = Date.now()
-    if (issueInfo["name"] == 'Story'){
+    if (issueType == 'Story'){
         body = {"fields":{"project":{"key": "FAN"}, 
         "summary": `Story ${timestamp} via REST`,
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
-    } else if(issueInfo["name"] == 'Epic'){
-        let fields = issueInfo["fields"]
+    } else if(issueType == 'Epic'){
+        let fields = cashedIssueInfo[issueType]['fields']
         let keys = Object.keys(fields);
         let cfKeys = keys.filter(key => key.toLowerCase().includes("customfield_"));
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": "FAN"}, 
-                         [val]: `Epic?! ${timestamp}`,
-                         "summary": `Epic?! ${timestamp}`,
+                         [val]: `Epic Fantomas ${timestamp}`,
+                         "summary": `Epic Fantomas ${timestamp}`,
                          "description": "Creating an Epic via REST",
                          "issuetype": {"name": "Epic"}}}
             }
@@ -89,14 +94,17 @@ const createIssue = async (body = {}) => {
     }
   }
 
-  for (i = 0; i < 1000; i++) {
-    requestBody(epic).then(createIssue)
-    if (i % 100 == 0){
-        console.log(`posting ${i}th ${epic}...`)
+(async function() {
+    for(var i = 0; i < 1000; i++){
+        await new Promise(async next => {
+            await requestBody(epic).then(createIssue); 
+            if (i % 10 == 0){
+                console.log(`posting ${i}th ${epic}...`)
+            }
+            next()
+        })
     }
-  }
-  
-//requestBody(story).then(createIssue)
+})()
 
 
 
