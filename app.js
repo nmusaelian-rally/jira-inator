@@ -2,6 +2,7 @@ const fetch = require('node-fetch');
 const URL   = require('url')
 require('dotenv').config()
 const config = require('./config');
+const projectKey = config["projectKey"]
 const { USERNAME, PASSWORD } = process.env
 
 const baseUrl = config['port'] ? `${config['domain']}:${config['port']}/${config['apiPath']}` : `${config['domain']}/${config['apiPath']}`
@@ -17,7 +18,7 @@ let cashedIssueInfo = {}
 
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
-    let params = {projectKey: config['projectKey'], issuetypeNames: issueType, expand: 'projects.issuetypes.fields'}
+    let params = {projectKey: projectKey, issuetypeNames: issueType, expand: 'projects.issuetypes.fields'}
     let url  = `${baseUrl}/${endpoint}${URL.format({ query: params })}` 
     return url
 }
@@ -41,7 +42,7 @@ const requestBody = async (issueType) => {
     await saveIssueInfo(issueType)
     let timestamp = Date.now()
     if (issueType == 'Story'){
-        body = {"fields":{"project":{"key": "FAN"}, 
+        body = {"fields":{"project":{"key": projectKey}, 
         "summary": `Story ${timestamp} via REST`,
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
@@ -51,9 +52,9 @@ const requestBody = async (issueType) => {
         let cfKeys = keys.filter(key => key.toLowerCase().includes("customfield_"));
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
-                body = {"fields":{"project":{"key": "FAN"}, 
-                         [val]: `Epic Fantomas ${timestamp}`,
-                         "summary": `Epic Fantomas ${timestamp}`,
+                body = {"fields":{"project":{"key": projectKey}, 
+                         [val]: `Epic Porky ${timestamp}`,
+                         "summary": `Epic Porky ${timestamp}`,
                          "description": "Creating an Epic via REST",
                          "issuetype": {"name": "Epic"}}}
             }
@@ -80,7 +81,7 @@ const createIssue = async (body = {}) => {
 
   const deleteIssues = async (index) => {
     try{
-        deleteUrl = `${baseUrl}/${config['projectKey']}-${index}`
+        deleteUrl = `${baseUrl}/${projectKey}-${index}`
         const response = await fetch(deleteUrl, {
           method: 'DELETE', 
           mode: 'cors', 
