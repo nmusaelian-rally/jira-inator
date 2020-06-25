@@ -53,8 +53,8 @@ const requestBody = async (issueType) => {
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": projectKey}, 
-                         [val]: `Epic Porky ${timestamp}`,
-                         "summary": `Epic Porky ${timestamp}`,
+                         [val]: `Epic ${timestamp}`,
+                         "summary": `Epic ${timestamp}`,
                          "description": "Creating an Epic via REST",
                          "issuetype": {"name": "Epic"}}}
             }
@@ -98,9 +98,9 @@ const createIssue = async (body = {}) => {
 (async function() {
     for(var i = 0; i < 1000; i++){
         await new Promise(async next => {
-            await requestBody(epic).then(createIssue); 
+            await requestBody(story).then(createIssue); 
             if (i % 10 == 0){
-                console.log(`posting ${i}th ${epic}...`)
+                console.log(`posting ${i}th ${story}...`)
             }
             next()
         })
