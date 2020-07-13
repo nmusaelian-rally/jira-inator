@@ -14,7 +14,7 @@ var headers = {
     'Authorization': 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64')
 }
 
-let cashedIssueInfo = {}
+let cachedIssueInfo = {}
 
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
@@ -26,15 +26,15 @@ const queryURL = (issueType) => {
 
 const saveIssueInfo = async (issueType) => {
     let url = queryURL(issueType)
-    if (!cashedIssueInfo.hasOwnProperty(issueType)){
+    if (!cachedIssueInfo.hasOwnProperty(issueType)){
         //console.log('fetching from server')
         let response = await fetch(url, {headers: headers})
         let data = await response.json()
-        cashedIssueInfo[issueType] = data["projects"][0]["issuetypes"][0]
+        cachedIssueInfo[issueType] = data["projects"][0]["issuetypes"][0]
     }else{
         //console.log('fetching from cache')
     }
-    return cashedIssueInfo[issueType]
+    return cachedIssueInfo[issueType]
 }
 
 const requestBody = async (issueType) => {
@@ -47,7 +47,8 @@ const requestBody = async (issueType) => {
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueType == 'Epic'){
-        let fields = cashedIssueInfo[issueType]['fields']
+        //identify customfield_xxx object with key "name" which is set to "Epic Name" to use it in the payload
+        let fields = cachedIssueInfo[issueType]['fields']
         let keys = Object.keys(fields);
         let cfKeys = keys.filter(key => key.toLowerCase().includes("customfield_"));
         for (let val of cfKeys){
@@ -96,11 +97,11 @@ const createIssue = async (body = {}) => {
   }
 
 (async function() {
-    for(var i = 0; i < 1000; i++){
+    for(var i = 0; i < 11; i++){
         await new Promise(async next => {
-            await requestBody(story).then(createIssue); 
+            await requestBody(epic).then(createIssue); 
             if (i % 10 == 0){
-                console.log(`posting ${i}th ${story}...`)
+                console.log(`posting ${i}th item...`)
             }
             next()
         })
