@@ -97,7 +97,7 @@ const createIssue = async (body = {}) => {
   }
 
 (async function() {
-    for(var i = 0; i < 11; i++){
+    for(let i = 0; i < 11; i++){
         await new Promise(async next => {
             await requestBody(epic).then(createIssue); 
             if (i % 10 == 0){
