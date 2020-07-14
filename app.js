@@ -129,21 +129,22 @@ const createIssue = async (body = {}) => {
     }
 })() */
 
-//bulk-create stories and assign them to an epic
-(async function(trialEpic) {
+
+(async function() {  
     try{
+        const epicKey = await requestBody(epic).then(createIssue).then(res => res['key']);
         for(let i = 0; i < 4; i++){
             await new Promise(async next => {
                 await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
                 next()
             })
         }
-        await linkStoriesToEpic(trialEpic, newIssues)
+        await linkStoriesToEpic(epicKey, newIssues)
     }catch {
         console.log(err)
     }
     
-})('FOO-1049')
+})()
 
 
 
