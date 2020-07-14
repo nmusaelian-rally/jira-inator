@@ -119,6 +119,17 @@ const createIssue = async (body = {}) => {
       }
   }
 
+// bulk-crete epics
+/* (async function() {
+    for(var i = 0; i < 1000; i++){
+        await new Promise(async next => {
+            await requestBody(epic).then(createIssue); 
+            next()
+        })
+    }
+})() */
+
+//bulk-create stories and assign them to an epic
 (async function(trialEpic) {
     try{
         for(let i = 0; i < 4; i++){
@@ -129,7 +140,7 @@ const createIssue = async (body = {}) => {
         }
         await linkStoriesToEpic(trialEpic, newIssues)
     }catch {
-        console.log
+        console.log(err)
     }
     
 })('FOO-1049')
