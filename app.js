@@ -6,6 +6,7 @@ const projectKey = config["projectKey"]
 const { USERNAME, PASSWORD } = process.env
 
 const baseUrl = config['port'] ? `${config['domain']}:${config['port']}/${config['apiPath']}` : `${config['domain']}/${config['apiPath']}`
+const epicLinkBaseUrl = config['port'] ? `${config['domain']}:${config['port']}/${config['agilePath']}` : `${config['domain']}/${config['agilePath']}`
 const endpoint = 'createmeta'
 const [epic, story] = config['supportedTypes'].split(',');
 
@@ -15,6 +16,7 @@ var headers = {
 }
 
 let cachedIssueInfo = {}
+const newIssues = []
 
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
@@ -96,17 +98,41 @@ const createIssue = async (body = {}) => {
     }
   }
 
-(async function() {
-    for(let i = 0; i < 11; i++){
-        await new Promise(async next => {
-            await requestBody(epic).then(createIssue); 
-            if (i % 10 == 0){
-                console.log(`posting ${i}th item...`)
-            }
-            next()
-        })
+  const linkStoriesToEpic = async (epicKey, storyKeys) => {
+      // example: 
+      //url: http://34.105.88.232:8080/rest/agile/1.0/epic/FOO-1049/issue
+      //payload: { "issues": ["FOO-1003"]}
+      try{
+          let url = `${epicLinkBaseUrl}/${epicKey}/issue`
+          let data = {"issues": storyKeys}
+          const response = await fetch(url, {
+            method: 'POST', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(data)
+          });
+        return response.json(); 
+      }catch {
+        console.log(err)
+      }
+  }
+
+(async function(trialEpic) {
+    try{
+        for(let i = 0; i < 4; i++){
+            await new Promise(async next => {
+                await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
+                next()
+            })
+        }
+        await linkStoriesToEpic(trialEpic, newIssues)
+    }catch {
+        console.log
     }
-})()
+    
+})('FOO-1049')
 
 
 
