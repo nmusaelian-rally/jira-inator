@@ -1,5 +1,6 @@
 const fetch = require('node-fetch');
 const URL   = require('url')
+
 require('dotenv').config()
 const config = require('./config');
 const projectKey = config["projectKey"]
@@ -45,8 +46,8 @@ const requestBody = async (issueType) => {
     let timestamp = Date.now()
     if (issueType == 'Story'){
         body = {"fields":{"project":{"key": projectKey}, 
-        "summary": `Story ${timestamp} via REST`,
-        "description": "Creating a Story via REST",
+        "summary": `Local LAC Story ${timestamp}`,
+        "description": "Story via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueType == 'Epic'){
         //identify customfield_xxx object with key "name" which is set to "Epic Name" to use it in the payload
@@ -113,39 +114,60 @@ const createIssue = async (body = {}) => {
             headers: headers,
             body: JSON.stringify(data)
           });
-        return response.json(); 
+        return response.text(); 
       }catch {
         console.log(err)
       }
   }
 
-// bulk-crete epics
-/* (async function() {
-    for(var i = 0; i < 1000; i++){
-        await new Promise(async next => {
-            await requestBody(epic).then(createIssue); 
-            next()
-        })
-    }
-})() */
 
-
-(async function() {  
-    try{
-        const epicKey = await requestBody(epic).then(createIssue).then(res => res['key']);
-        for(let i = 0; i < 4; i++){
-            await new Promise(async next => {
-                await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
-                next()
-            })
-        }
-        await linkStoriesToEpic(epicKey, newIssues)
-    }catch {
-        console.log(err)
-    }
-    
-})()
-
-
-
+const argv = require('yargs')
+    .command('create', 'create stories', (yargs) => {
+        yargs
+           .positional('count', {
+               describe: 'how many stories to create',
+               default: 10
+           }).positional('epic', {
+               describe: 'create epic, link to stories'
+           })
+    }, (argv) => {
+        console.log(`Creating ${argv.count} stories...`);
+        (async function() {  
+            try{
+                for(let i = 0; i < argv.count; i++){
+                    await new Promise(async next => {
+                        await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
+                        next()
+                    })
+                }
+                if (argv.epic){
+                    console.log(`Creating an epic, linking ${argv.count} stories to it...`)
+                    let epicKey = await requestBody(epic).then(createIssue).then(res => res['key']);
+                    await linkStoriesToEpic(epicKey, newIssues)
+                }
+                
+            }catch (error) {
+                console.log(error)
+            }
+        })()
+        
+    }).command('delete', 'delete issues', (yargs) => {
+        yargs 
+           .positional('start', {
+               describe: 'start index, e.g. 1 if start with FOO-1'
+           }).positional('end', {
+               describe: 'end index, e.g. 100 if end with F00-100'
+           })
+    }, (argv) => {
+        console.log(`Deleting stories starting at index ${argv.start}, ending at index ${argv.end}...`);
+        (async function(start, end){
+            try{
+                for(let i = start; i <= end; i++){
+                    await deleteIssues(i)
+                }
+            }catch(error){
+                console.log(error)
+            }
+        })(argv.start, argv.end)
+    }).argv;
 
