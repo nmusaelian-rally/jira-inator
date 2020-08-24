@@ -83,7 +83,7 @@ const createIssue = async (body = {}) => {
     }
   }
 
-  const deleteIssues = async (index) => {
+  const deleteIssue = async (index) => {
     try{
         deleteUrl = `${baseUrl}/${projectKey}-${index}`
         const response = await fetch(deleteUrl, {
@@ -120,6 +120,36 @@ const createIssue = async (body = {}) => {
       }
   }
 
+  const bulkCreateIssues = async (count, linkToEpic=false) => {  
+    console.log(`Creating ${count} stories...`)  
+    try{
+        for(let i = 0; i < count; i++){
+            await new Promise(async next => {
+                await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
+                next()
+            })
+        }
+        if (linkToEpic){
+            console.log(`Creating an epic, linking ${count} stories to it...`)
+            let epicKey = await requestBody(epic).then(createIssue).then(res => res['key']);
+            await linkStoriesToEpic(epicKey, newIssues)
+        }
+    }catch (error) {
+        console.log(error)
+    }
+}
+
+const bulkDeleteIssues = async (start, end) => {
+    console.log(`Deleting stories starting at index ${start}, ending at ${end}...`);
+    try{
+        for(let i = start; i <= end; i++){
+            await deleteIssue(i)
+        }
+    }catch(error){
+        console.log(error)
+    }
+}
+
 
 const argv = require('yargs')
     .command('create', 'create stories', (yargs) => {
@@ -131,26 +161,7 @@ const argv = require('yargs')
                describe: 'create epic, link to stories'
            })
     }, (argv) => {
-        console.log(`Creating ${argv.count} stories...`);
-        (async function() {  
-            try{
-                for(let i = 0; i < argv.count; i++){
-                    await new Promise(async next => {
-                        await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
-                        next()
-                    })
-                }
-                if (argv.epic){
-                    console.log(`Creating an epic, linking ${argv.count} stories to it...`)
-                    let epicKey = await requestBody(epic).then(createIssue).then(res => res['key']);
-                    await linkStoriesToEpic(epicKey, newIssues)
-                }
-                
-            }catch (error) {
-                console.log(error)
-            }
-        })()
-        
+        bulkCreateIssues(argv.count, argv.epic)
     }).command('delete', 'delete issues', (yargs) => {
         yargs 
            .positional('start', {
@@ -159,15 +170,6 @@ const argv = require('yargs')
                describe: 'end index, e.g. 100 if end with F00-100'
            })
     }, (argv) => {
-        console.log(`Deleting stories starting at index ${argv.start}, ending at index ${argv.end}...`);
-        (async function(start, end){
-            try{
-                for(let i = start; i <= end; i++){
-                    await deleteIssues(i)
-                }
-            }catch(error){
-                console.log(error)
-            }
-        })(argv.start, argv.end)
+        bulkDeleteIssues(argv.start, argv.end)
     }).argv;
 
