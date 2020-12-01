@@ -46,8 +46,8 @@ const requestBody = async (issueType) => {
     let timestamp = Date.now()
     if (issueType == 'Story'){
         body = {"fields":{"project":{"key": projectKey}, 
-        "summary": `Local LAC Story ${timestamp}`,
-        "description": "Story via REST",
+        "summary": `Story ${timestamp}`,
+        "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueType == 'Epic'){
         //identify customfield_xxx object with key "name" which is set to "Epic Name" to use it in the payload
@@ -78,7 +78,7 @@ const createIssue = async (body = {}) => {
             body: JSON.stringify(body) 
           });
         return response.json(); 
-    }catch{
+    }catch(err){
       console.log(err)
     }
   }
@@ -115,7 +115,7 @@ const createIssue = async (body = {}) => {
             body: JSON.stringify(data)
           });
         return response.text(); 
-      }catch {
+      }catch(err) {
         console.log(err)
       }
   }
@@ -124,6 +124,9 @@ const createIssue = async (body = {}) => {
     console.log(`Creating ${count} stories...`)  
     try{
         for(let i = 0; i < count; i++){
+            if(i % 10 == 0){
+                console.log('.')
+            }
             await new Promise(async next => {
                 await requestBody(story).then(createIssue).then(res => newIssues.push(res['key'])); 
                 next()
@@ -149,7 +152,6 @@ const bulkDeleteIssues = async (start, end) => {
         console.log(error)
     }
 }
-
 
 const argv = require('yargs')
     .command('create', 'create stories', (yargs) => {
