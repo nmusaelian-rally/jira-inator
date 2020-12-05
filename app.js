@@ -51,7 +51,7 @@ const requestBody = async (issueType) => {
     let timestamp = Date.now()
     if (issueType == 'Story'){
         body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
-        "summary": `2nd batch Story ${timestamp}`,
+        "summary": `1st batch Story ${timestamp}`,
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueType == 'Epic'){
@@ -62,8 +62,8 @@ const requestBody = async (issueType) => {
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
-                         [val]: `2nd batch Epic ${timestamp}`,
-                         "summary": `2nd batch Epic ${timestamp}`,
+                         [val]: `1st batch Epic ${timestamp}`,
+                         "summary": `1st batch Epic ${timestamp}`,
                          "description": "Creating an Epic via REST",
                          "issuetype": {"name": "Epic"}}}
             }
