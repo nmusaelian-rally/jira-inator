@@ -15,10 +15,9 @@ PASSWORD="Password"
 ## Usage
 
 Use `jiraUrl` and `projectKey` specific to your Jira instance, e.g.
-```node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic```
-```node app.js delete --jiraUrl='https://jira-nik4.testn.f4tech.com' --projectKey='SP' --start=22 --end=39```
-
-
+```
+node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic
+node app.js delete --jiraUrl='https://jira-nik4.testn.f4tech.com' --projectKey='SP' --start=22 --end=39
 ```
 % node app.js --help
 app.js [command]
