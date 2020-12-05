@@ -12,21 +12,12 @@ USERNAME="test"
 PASSWORD="Password"
 ```
 
-Use `domain`, `port`, `projectKey` specific to your Jira instance in `config.js` 
-```
-const config = {
-    domain: 'https://jira-name.testn.f4tech.com',
-    //port: '8080',
-    projectKey: 'FOO', 
-    apiPath: 'rest/api/2/issue',
-    agilePath: 'rest/agile/1.0/epic',
-    supportedTypes: 'Epic,Story'
-  };
-  
-  module.exports = config;
-  ```
-
 ## Usage
+
+Use `jiraUrl` and `projectKey` specific to your Jira instance, e.g.
+`node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic`
+`node app.js delete --jiraUrl='https://jira-nik4.testn.f4tech.com' --projectKey='SP' --start=22 --end=39`
+
 
 ```
 % node app.js --help
@@ -42,8 +33,10 @@ app.js create
 create stories
 
 Positionals:
-  count  how many stories to create                                [default: 10]
-  epic   create epic, link to stories
+  jiraUrl     Jira jiraUrl url
+  projectKey  Jira project key
+  count       how many stories to create                           [default: 10]
+  epic        create epic, link to stories
 
 % node app.js delete --help
 app.js delete
@@ -51,7 +44,9 @@ app.js delete
 delete issues
 
 Positionals:
-  start  start index, e.g. 1 if start with FOO-1
-  end    end index, e.g. 100 if end with F00-100
+  jiraUrl     Jira jiraUrl url
+  projectKey  Jira project key
+  start       start index, e.g. 1 if start with FOO-1
+  end         end index, e.g. 100 if end with F00-100
 
 ```
