@@ -35,7 +35,7 @@ const queryURL = (issueType) => {
 const saveIssueInfo = async (issueType) => {
     let url = queryURL(issueType)
     if (!cachedIssueInfo.hasOwnProperty(issueType)){
-        //console.log('fetching from jiraUrl')
+        //console.log('fetching from server')
         let response = await fetch(url, {headers: headers})
         let data = await response.json()
         cachedIssueInfo[issueType] = data["projects"][0]["issuetypes"][0]
