@@ -6,7 +6,7 @@ const { USERNAME, PASSWORD } = process.env
 const apiPath = 'rest/api/2/issue';
 const agilePath = 'rest/agile/1.0/epic';
 
-let details = {};
+let jiraURLs = {};
 const endpoint = 'createmeta'
 
 var headers = {
@@ -17,7 +17,7 @@ var headers = {
 let cachedIssueInfo = {}
 const newIssues = []
 
-const jiraDetails = (jiraUrl, projectKey) => {
+const jiraUrlMaker = (jiraUrl, projectKey) => {
     return  {
         baseUrl: `${jiraUrl}/${apiPath}`,
         epicLinkBaseUrl : `${jiraUrl}/${agilePath}`,
@@ -27,8 +27,8 @@ const jiraDetails = (jiraUrl, projectKey) => {
 
 const queryURL = (issueType) => {
     //example: http://34.105.88.232:8080/rest/api/2/issue/createmeta?projectKey=FAN&issuetypeNames=Epic&expand=projects.issuetypes.fields
-    let params = {projectKey: details.projectKey, issuetypeNames: issueType, expand: 'projects.issuetypes.fields'}
-    let url  = `${details.baseUrl}/${endpoint}${URL.format({ query: params })}` 
+    let params = {projectKey: jiraURLs.projectKey, issuetypeNames: issueType, expand: 'projects.issuetypes.fields'}
+    let url  = `${jiraURLs.baseUrl}/${endpoint}${URL.format({ query: params })}` 
     return url
 }
 
@@ -50,7 +50,7 @@ const requestBody = async (issueType) => {
     await saveIssueInfo(issueType)
     let timestamp = Date.now()
     if (issueType == 'Story'){
-        body = {"fields":{"project":{"key": details.projectKey}, 
+        body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
         "summary": `2nd batch Story ${timestamp}`,
         "description": "Creating a Story via REST",
         "issuetype": {"name": "Story"}}}
@@ -61,7 +61,7 @@ const requestBody = async (issueType) => {
         let cfKeys = keys.filter(key => key.toLowerCase().includes("customfield_"));
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
-                body = {"fields":{"project":{"key": details.projectKey}, 
+                body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
                          [val]: `2nd batch Epic ${timestamp}`,
                          "summary": `2nd batch Epic ${timestamp}`,
                          "description": "Creating an Epic via REST",
@@ -74,7 +74,7 @@ const requestBody = async (issueType) => {
 
 const createIssue = async (body = {}) => {
     try{
-        const response = await fetch(details.baseUrl, {
+        const response = await fetch(jiraURLs.baseUrl, {
             method: 'POST', 
             mode: 'cors', 
             cache: 'no-cache', 
@@ -90,7 +90,7 @@ const createIssue = async (body = {}) => {
 
   const deleteIssue = async (index) => {
     try{
-        deleteUrl = `${details.baseUrl}/${details.projectKey}-${index}`
+        deleteUrl = `${jiraURLs.baseUrl}/${jiraURLs.projectKey}-${index}`
         const response = await fetch(deleteUrl, {
           method: 'DELETE', 
           mode: 'cors', 
@@ -109,7 +109,7 @@ const createIssue = async (body = {}) => {
       //url: http://34.105.88.232:8080/rest/agile/1.0/epic/FOO-1049/issue
       //payload: { "issues": ["FOO-1003"]}
       try{
-          let url = `${details.epicLinkBaseUrl}/${epicKey}/issue`
+          let url = `${jiraURLs.epicLinkBaseUrl}/${epicKey}/issue`
           let data = {"issues": storyKeys}
           const response = await fetch(url, {
             method: 'POST', 
@@ -170,7 +170,7 @@ const argv = require('yargs')
                describe: 'create epic, link to stories'
            })
     }, (argv) => {
-        details = jiraDetails(argv.jiraUrl, argv.projectKey)
+        jiraURLs = jiraUrlMaker(argv.jiraUrl, argv.projectKey)
         bulkCreateIssues(argv.count, argv.epic)
     }).command('delete', 'delete issues', (yargs) => {
         yargs 
@@ -182,7 +182,7 @@ const argv = require('yargs')
                describe: 'end index, e.g. 100 if end with F00-100'
            })
     }, (argv) => {
-        details = jiraDetails(argv.jiraUrl, argv.projectKey)
+        jiraURLs = jiraUrlMaker(argv.jiraUrl, argv.projectKey)
         bulkDeleteIssues(argv.start, argv.end)
     }).argv;
 
