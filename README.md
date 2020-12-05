@@ -15,8 +15,8 @@ PASSWORD="Password"
 ## Usage
 
 Use `jiraUrl` and `projectKey` specific to your Jira instance, e.g.
-`node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic`
-`node app.js delete --jiraUrl='https://jira-nik4.testn.f4tech.com' --projectKey='SP' --start=22 --end=39`
+```node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic```
+```node app.js delete --jiraUrl='https://jira-nik4.testn.f4tech.com' --projectKey='SP' --start=22 --end=39```
 
 
 ```
@@ -33,7 +33,7 @@ app.js create
 create stories
 
 Positionals:
-  jiraUrl     Jira jiraUrl url
+  jiraUrl     Jira url
   projectKey  Jira project key
   count       how many stories to create                           [default: 10]
   epic        create epic, link to stories
@@ -44,7 +44,7 @@ app.js delete
 delete issues
 
 Positionals:
-  jiraUrl     Jira jiraUrl url
+  jiraUrl     Jira url
   projectKey  Jira project key
   start       start index, e.g. 1 if start with FOO-1
   end         end index, e.g. 100 if end with F00-100

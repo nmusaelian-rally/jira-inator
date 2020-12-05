@@ -161,7 +161,7 @@ const bulkDeleteIssues = async (start, end) => {
 const argv = require('yargs')
     .command('create', 'create stories', (yargs) => {
         yargs
-           .positional('jiraUrl', { describe: "Jira jiraUrl url"})
+           .positional('jiraUrl', { describe: "Jira url"})
            .positional('projectKey', {describe: 'Jira project key'})
            .positional('count', {
                describe: 'how many stories to create',
@@ -174,7 +174,7 @@ const argv = require('yargs')
         bulkCreateIssues(argv.count, argv.epic)
     }).command('delete', 'delete issues', (yargs) => {
         yargs 
-           .positional('jiraUrl', { describe: "Jira jiraUrl url"})
+           .positional('jiraUrl', { describe: "Jira url"})
            .positional('projectKey', {describe: 'Jira project key'})
            .positional('start', {
                describe: 'start index, e.g. 1 if start with FOO-1'
