@@ -50,6 +50,7 @@ const requestBody = async (issueType) => {
     await saveIssueInfo(issueType)
     let timestamp = Date.now()
     if (issueType == 'Story'){
+    //if (issueType == 'Bug'){
         body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
         "summary": `1st batch Story ${timestamp}`,
         "description": "Creating a Story via REST",
@@ -134,6 +135,7 @@ const createIssue = async (body = {}) => {
             }
             await new Promise(async next => {
                 await requestBody('Story').then(createIssue).then(res => newIssues.push(res['key'])); 
+                //await requestBody('Bug').then(createIssue).then(res => newIssues.push(res['key'])); 
                 next()
             })
         }
