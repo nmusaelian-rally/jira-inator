@@ -19,8 +19,6 @@ var headers = {
 
 let cachedIssueInfo = {}
 const newIssues = [];
-const updatedIssues = [];
-let currentSprintId = null;
 
 const jiraUrlMaker = (jiraUrl, projectKey) => {
     return  {
@@ -115,7 +113,7 @@ const createIssue = async (body = {}) => {
   const updateIssue = async (newSummary, issueKey) => {
     console.log(`updating issue ${issueKey}`)
     try{
-        updatedIssues.push(issueKey);
+        //updatedIssues.push(issueKey);
         let updateUrl = `${jiraURLs.baseUrl}/${issueKey}`;
         let data = {"fields": {"summary": newSummary}};
         const response = await fetch(updateUrl, {
@@ -209,7 +207,6 @@ const addIssuesToSprint = async (sprintId, storyKeys) => {
         console.log(`adding issues to sprint ${storyKeys}`)
         let url = `${jiraURLs.sprintBaseUrl}/${sprintId}/issue`;
         let data = {"issues": storyKeys};
-        currentSprintId = sprintId;
           const response = await fetch(url, {
             method: 'POST', 
             mode: 'cors', 
@@ -245,14 +242,16 @@ const moveIssuesToBacklog = async (storyKeys) => {
 }
 
 const createAndUpdateIssue = async (summary, sprint, boardId, loopCount) => {
-    await requestBody('Story').then(createIssue).then(res => updateIssue(summary, res['key']));
+    let issueKey = await requestBody('Story').then(createIssue).then(res => res['key'])
+    await updateIssue(summary, issueKey)
     let body = {"name": sprint, "originBoardId": boardId}
-    await createSprint(body).then(res => addIssuesToSprint(res['id'], updatedIssues))
-    await moveIssuesToBacklog(updatedIssues);
+    let sprintId = await createSprint(body).then(res => res['id'])
+    await addIssuesToSprint(sprintId, [issueKey])
+    await moveIssuesToBacklog([issueKey]);
     for(let i = 0; i < loopCount; i++){
-      await updateIssue(summary.split("").reverse().join(""), updatedIssues[0]);
-      await addIssuesToSprint(currentSprintId, updatedIssues);
-      await moveIssuesToBacklog(updatedIssues);
+      await updateIssue(summary + i, issueKey);
+      await addIssuesToSprint(sprintId, [issueKey]);
+      await moveIssuesToBacklog([issueKey]);
     }
 }
 
