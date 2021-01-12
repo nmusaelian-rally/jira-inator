@@ -5,6 +5,9 @@ require('dotenv').config()
 const { USERNAME, PASSWORD } = process.env
 const apiPath = 'rest/api/2/issue';
 const agilePath = 'rest/agile/1.0/epic';
+const sprintPath = 'rest/agile/1.0/sprint';
+const backlogPath = 'rest/agile/1.0/backlog'
+
 
 let jiraURLs = {};
 const endpoint = 'createmeta'
@@ -15,12 +18,16 @@ var headers = {
 }
 
 let cachedIssueInfo = {}
-const newIssues = []
+const newIssues = [];
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 const jiraUrlMaker = (jiraUrl, projectKey) => {
     return  {
         baseUrl: `${jiraUrl}/${apiPath}`,
         epicLinkBaseUrl : `${jiraUrl}/${agilePath}`,
+        sprintBaseUrl : `${jiraUrl}/${sprintPath}`,
+        backlogBaseUrl : `${jiraUrl}/${backlogPath}`,
         projectKey: projectKey
     }
 }
@@ -52,8 +59,8 @@ const requestBody = async (issueType) => {
     if (issueType == 'Story'){
     //if (issueType == 'Bug'){
         body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
-        "summary": `1st batch Story ${timestamp}`,
-        "description": "Creating a Story via REST",
+        "summary": `story ${timestamp}`,
+        "description": "via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueType == 'Epic'){
         //identify customfield_xxx object with key "name" which is set to "Epic Name" to use it in the payload
@@ -63,9 +70,9 @@ const requestBody = async (issueType) => {
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
-                         [val]: `1st batch Epic ${timestamp}`,
-                         "summary": `1st batch Epic ${timestamp}`,
-                         "description": "Creating an Epic via REST",
+                         [val]: `epic ${timestamp}`,
+                         "summary": `epic ${timestamp}`,
+                         "description": "via REST",
                          "issuetype": {"name": "Epic"}}}
             }
          }
@@ -91,7 +98,7 @@ const createIssue = async (body = {}) => {
 
   const deleteIssue = async (index) => {
     try{
-        deleteUrl = `${jiraURLs.baseUrl}/${jiraURLs.projectKey}-${index}`
+        let deleteUrl = `${jiraURLs.baseUrl}/${jiraURLs.projectKey}-${index}`;
         const response = await fetch(deleteUrl, {
           method: 'DELETE', 
           mode: 'cors', 
@@ -101,8 +108,44 @@ const createIssue = async (body = {}) => {
         });
         return response.text; 
     } catch(err){
-        console.log(err)
+        console.log(err);
     }
+  }
+
+  const updateIssue = async (newSummary, issueKey) => {
+    console.log(`updating issue ${issueKey}`)
+    try{
+        let updateUrl = `${jiraURLs.baseUrl}/${issueKey}`;
+        let data = {"fields": {"summary": newSummary}};
+        const response = await fetch(updateUrl, {
+            method: 'PUT', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(data)
+          });
+        return response.text();  
+    } catch(err){
+        console.log(err);
+    }
+  }
+
+  const createSprint = async (body) => {
+      console.log('creating a sprint')
+      try{
+        const response = await fetch(jiraURLs.sprintBaseUrl, {
+            method: 'POST', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(body) 
+          });
+        return response.json(); 
+      } catch(err){
+          console.log(err)
+      }
   }
 
   const linkStoriesToEpic = async (epicKey, storyKeys) => {
@@ -160,6 +203,58 @@ const bulkDeleteIssues = async (start, end) => {
     }
 }
 
+const addIssuesToSprint = async (sprintId, storyKeys) => {
+    try{
+        console.log(`adding issues to sprint ${storyKeys}`)
+        let url = `${jiraURLs.sprintBaseUrl}/${sprintId}/issue`;
+        let data = {"issues": storyKeys};
+          const response = await fetch(url, {
+            method: 'POST', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(data)
+          });
+        return response.text(); 
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const moveIssuesToBacklog = async (storyKeys) => {
+    try{
+        console.log(`moving issues to backlog ${storyKeys}`)
+        let url = `${jiraURLs.backlogBaseUrl}/issue`;
+        let data = {"issues": storyKeys}
+          const response = await fetch(url, {
+            method: 'POST', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(data)
+          });
+        return response.text(); 
+    }catch(err){
+        console.log(err)
+    }
+}
+
+const createAndUpdateIssue = async (summary, sprint, boardId, loopCount, interval) => {
+    let issueKey = await requestBody('Story').then(createIssue).then(res => res['key'])
+    await updateIssue(summary, issueKey)
+    let body = {"name": sprint, "originBoardId": boardId}
+    let sprintId = await createSprint(body).then(res => res['id'])
+    await addIssuesToSprint(sprintId, [issueKey]);
+    await sleep(interval);
+    for(let i = 0; i < loopCount; i++){
+      await moveIssuesToBacklog([issueKey]);
+      await updateIssue(summary + i, issueKey);
+      await addIssuesToSprint(sprintId, [issueKey]);
+    }
+}
+
 const argv = require('yargs')
     .command('create', 'create stories', (yargs) => {
         yargs
@@ -176,7 +271,7 @@ const argv = require('yargs')
         bulkCreateIssues(argv.count, argv.epic)
     }).command('delete', 'delete issues', (yargs) => {
         yargs 
-           .positional('jiraUrl', { describe: "Jira url"})
+           .positional('jiraUrl', { describe: 'Jira url'})
            .positional('projectKey', {describe: 'Jira project key'})
            .positional('start', {
                describe: 'start index, e.g. 1 if start with FOO-1'
@@ -186,5 +281,18 @@ const argv = require('yargs')
     }, (argv) => {
         jiraURLs = jiraUrlMaker(argv.jiraUrl, argv.projectKey)
         bulkDeleteIssues(argv.start, argv.end)
-    }).argv;
+    }).command('update', 'create and update issue', (yargs) => {
+        yargs
+        .positional('jiraUrl', { describe: 'Jira url'})
+        .positional('projectKey', {describe: 'Jira project key'})
+        .positional('summary', {describe: 'issue summary, e.g. BadBug'})
+        .positional('sprint', {describe: 'sprint name, e.g. Sprint1'})
+        .positional('board', {describe: 'board id, see status bar when hover over Configure menu in boards'})
+        .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint', default: 0})
+        .positional('interval', {describe: 'interval in ms between update requests', default: 10000})
+    }, (argv) => {
+        jiraURLs = jiraUrlMaker(argv.jiraUrl, argv.projectKey)
+        createAndUpdateIssue(argv.summary, argv.sprint, argv.board, argv.loop, argv.interval)
+    })
+    .argv;
 
