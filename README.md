@@ -54,6 +54,8 @@ Positionals:
 
 % node app.js update --help
 
+create and update issue
+
 Positionals:
   jiraUrl     Jira url
   projectKey  Jira project key
