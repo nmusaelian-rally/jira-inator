@@ -113,7 +113,6 @@ const createIssue = async (body = {}) => {
   const updateIssue = async (newSummary, issueKey) => {
     console.log(`updating issue ${issueKey}`)
     try{
-        //updatedIssues.push(issueKey);
         let updateUrl = `${jiraURLs.baseUrl}/${issueKey}`;
         let data = {"fields": {"summary": newSummary}};
         const response = await fetch(updateUrl, {
@@ -225,7 +224,6 @@ const moveIssuesToBacklog = async (storyKeys) => {
     try{
         console.log(`moving issues to backlog ${storyKeys}`)
         let url = `${jiraURLs.backlogBaseUrl}/issue`;
-        console.log(url) ///rest/agile/1.0/backlog/issue
         let data = {"issues": storyKeys}
           const response = await fetch(url, {
             method: 'POST', 
@@ -288,7 +286,7 @@ const argv = require('yargs')
         .positional('summary', {describe: 'issue summary, e.g. BadBug'})
         .positional('sprint', {describe: 'sprint name, e.g. Sprint1'})
         .positional('board', {describe: 'board id, see status bar when hover over Configure menu in boards'})
-        .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint'})
+        .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint', default: 0})
     }, (argv) => {
         jiraURLs = jiraUrlMaker(argv.jiraUrl, argv.projectKey)
         createAndUpdateIssue(argv.summary, argv.sprint, argv.board, argv.loop)

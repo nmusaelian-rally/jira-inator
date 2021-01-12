@@ -1,6 +1,7 @@
 # jira-inator
 
-Creates jira stories and epics using Jira REST API.
+Bulk creates jira stories and epics using Jira REST API.
+Update functionality is designed to make changes in quick succession in attempt to generate concurrency conflict on the Rally side when `jira-inator` is used to populate Jira project mapped to a Rally workspace via LAC adapter.
 
 ## Installation
 
@@ -18,6 +19,7 @@ Use `jiraUrl` and `projectKey` specific to your Jira instance, e.g.
 ```
 node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic
 node app.js delete --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --start=22 --end=39
+node app.js update --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --summary='myStory' --sprint='Sprint1' --board=1 --loop=10
 ```
 ```
 % node app.js --help
@@ -26,6 +28,7 @@ app.js [command]
 Commands:
   app.js create  create stories
   app.js delete  delete issues
+  app.js update  create and update issue
 
 % node app.js create --help
 app.js create
@@ -48,5 +51,16 @@ Positionals:
   projectKey  Jira project key
   start       start index, e.g. 1 if start with FOO-1
   end         end index, e.g. 100 if end with F00-100
+
+% node app.js update --help
+
+Positionals:
+  jiraUrl     Jira url
+  projectKey  Jira project key
+  summary     issue summary, e.g. BadBug
+  sprint      sprint name, e.g. Sprint1
+  board       board id, see status bar when hover over Configure menu in boards
+  loop        how many times to rename, add and remove issue from sprint
+                                                                    [default: 0]
 
 ```
