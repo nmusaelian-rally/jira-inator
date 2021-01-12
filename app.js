@@ -20,6 +20,8 @@ var headers = {
 let cachedIssueInfo = {}
 const newIssues = [];
 
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 const jiraUrlMaker = (jiraUrl, projectKey) => {
     return  {
         baseUrl: `${jiraUrl}/${apiPath}`,
@@ -57,8 +59,8 @@ const requestBody = async (issueType) => {
     if (issueType == 'Story'){
     //if (issueType == 'Bug'){
         body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
-        "summary": `1st batch Story ${timestamp}`,
-        "description": "Creating a Story via REST",
+        "summary": `story ${timestamp}`,
+        "description": "via REST",
         "issuetype": {"name": "Story"}}}
     } else if(issueType == 'Epic'){
         //identify customfield_xxx object with key "name" which is set to "Epic Name" to use it in the payload
@@ -68,9 +70,9 @@ const requestBody = async (issueType) => {
         for (let val of cfKeys){
             if (fields[val]["name"] == 'Epic Name'){
                 body = {"fields":{"project":{"key": jiraURLs.projectKey}, 
-                         [val]: `1st batch Epic ${timestamp}`,
-                         "summary": `1st batch Epic ${timestamp}`,
-                         "description": "Creating an Epic via REST",
+                         [val]: `epic ${timestamp}`,
+                         "summary": `epic ${timestamp}`,
+                         "description": "via REST",
                          "issuetype": {"name": "Epic"}}}
             }
          }
@@ -239,17 +241,17 @@ const moveIssuesToBacklog = async (storyKeys) => {
     }
 }
 
-const createAndUpdateIssue = async (summary, sprint, boardId, loopCount) => {
+const createAndUpdateIssue = async (summary, sprint, boardId, loopCount, interval) => {
     let issueKey = await requestBody('Story').then(createIssue).then(res => res['key'])
     await updateIssue(summary, issueKey)
     let body = {"name": sprint, "originBoardId": boardId}
     let sprintId = await createSprint(body).then(res => res['id'])
-    await addIssuesToSprint(sprintId, [issueKey])
-    await moveIssuesToBacklog([issueKey]);
+    await addIssuesToSprint(sprintId, [issueKey]);
+    await sleep(interval);
     for(let i = 0; i < loopCount; i++){
+      await moveIssuesToBacklog([issueKey]);
       await updateIssue(summary + i, issueKey);
       await addIssuesToSprint(sprintId, [issueKey]);
-      await moveIssuesToBacklog([issueKey]);
     }
 }
 
@@ -287,9 +289,10 @@ const argv = require('yargs')
         .positional('sprint', {describe: 'sprint name, e.g. Sprint1'})
         .positional('board', {describe: 'board id, see status bar when hover over Configure menu in boards'})
         .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint', default: 0})
+        .positional('interval', {describe: 'interval in ms between update requests', default: 10000})
     }, (argv) => {
         jiraURLs = jiraUrlMaker(argv.jiraUrl, argv.projectKey)
-        createAndUpdateIssue(argv.summary, argv.sprint, argv.board, argv.loop)
+        createAndUpdateIssue(argv.summary, argv.sprint, argv.board, argv.loop, argv.interval)
     })
     .argv;
 

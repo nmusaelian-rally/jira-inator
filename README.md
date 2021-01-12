@@ -62,7 +62,7 @@ Positionals:
   summary     issue summary, e.g. BadBug
   sprint      sprint name, e.g. Sprint1
   board       board id, see status bar when hover over Configure menu in boards
-  loop        how many times to rename, add and remove issue from sprint
-                                                                    [default: 0]
+  loop        how many times to rename, add and remove issue from sprint [default: 0]
+  interval    interval in ms between update requests                     [default: 10000]
 
 ```
