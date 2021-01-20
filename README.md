@@ -19,7 +19,7 @@ Use `jiraUrl` and `projectKey` specific to your Jira instance, e.g.
 ```
 node app.js create --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --count=5 --epic
 node app.js delete --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --start=22 --end=39
-node app.js update --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --summary='myStory' --sprint='Sprint1' --board=1 --loop=10
+node app.js update --jiraUrl='https://jira-name.testn.f4tech.com' --projectKey='SP' --summary='abc'  --board=35  --interval=2000 --sprint=38 --loop=1
 ```
 ```
 % node app.js --help
@@ -60,9 +60,9 @@ Positionals:
   jiraUrl     Jira url
   projectKey  Jira project key
   summary     issue summary, e.g. BadBug
-  sprint      sprint name, e.g. Sprint1
   board       board id, see status bar when hover over Configure menu in boards
-  loop        how many times to rename, add and remove issue from sprint [default: 0]
-  interval    interval in ms between update requests                     [default: 10000]
+  sprint      sprint id, e.g. 42, if null, new sprint will be created     [default: null]
+  loop        how many times to rename, add and remove issue from sprint  [default: 0]
+  interval    interval in ms between update requests                      [default: 10000]
 
 ```

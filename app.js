@@ -21,6 +21,7 @@ let cachedIssueInfo = {}
 const newIssues = [];
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const defaultSprintName = "Sprint 1"
 
 const jiraUrlMaker = (jiraUrl, projectKey) => {
     return  {
@@ -50,6 +51,23 @@ const saveIssueInfo = async (issueType) => {
         //console.log('fetching from cache')
     }
     return cachedIssueInfo[issueType]
+}
+
+const getStatusTransitions = async (issueKey) => {
+    //rest/api/2/issue/${issueIdOrKey}/transitions
+    let url = `${jiraURLs.baseUrl}/${issueKey}/transitions`
+    try{
+        const response = await fetch(url, {
+            method: 'GET', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers, 
+          });
+        return response.json(); 
+    }catch(err){
+      console.log(err)
+    }
 }
 
 const requestBody = async (issueType) => {
@@ -112,13 +130,57 @@ const createIssue = async (body = {}) => {
     }
   }
 
-  const updateIssue = async (newSummary, issueKey) => {
+/*   const updateIssue = async (issueKey, newSummary, newStatusId=null) => {
+    console.log(`updating issue ${issueKey}`)
+    try{
+        let updateUrl = `${jiraURLs.baseUrl}/${issueKey}`;
+        let data = {"fields": {"summary": newSummary}};
+        if (newStatusId) {
+            data["transition"] = {
+                "id": newStatusId
+            }
+            console.log(`data: ${JSON.stringify(data)}`);
+        }
+        const response = await fetch(updateUrl, {
+            method: 'PUT', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(data)
+          });
+        return response.text();  
+    } catch(err){
+        console.log(err);
+    }
+  } */
+
+  const updateIssue = async (issueKey, newSummary) => {
     console.log(`updating issue ${issueKey}`)
     try{
         let updateUrl = `${jiraURLs.baseUrl}/${issueKey}`;
         let data = {"fields": {"summary": newSummary}};
         const response = await fetch(updateUrl, {
             method: 'PUT', 
+            mode: 'cors', 
+            cache: 'no-cache', 
+            credentials: 'same-origin', 
+            headers: headers,
+            body: JSON.stringify(data)
+          });
+        return response.text();  
+    } catch(err){
+        console.log(err);
+    }
+  }
+
+  const transitionIssue = async (issueKey, newStatusId) =>{
+    console.log(`transitioning issue ${issueKey} to status: ${newStatusId}`)
+    try{
+        let updateUrl = `${jiraURLs.baseUrl}/${issueKey}/transitions`;
+        let data = {"transition": {"id": newStatusId}};
+        const response = await fetch(updateUrl, {
+            method: 'POST', 
             mode: 'cors', 
             cache: 'no-cache', 
             credentials: 'same-origin', 
@@ -205,7 +267,7 @@ const bulkDeleteIssues = async (start, end) => {
 
 const addIssuesToSprint = async (sprintId, storyKeys) => {
     try{
-        console.log(`adding issues to sprint ${storyKeys}`)
+        console.log(`adding issues ${storyKeys} to sprint ${sprintId}`)
         let url = `${jiraURLs.sprintBaseUrl}/${sprintId}/issue`;
         let data = {"issues": storyKeys};
           const response = await fetch(url, {
@@ -243,15 +305,27 @@ const moveIssuesToBacklog = async (storyKeys) => {
 
 const createAndUpdateIssue = async (summary, sprint, boardId, loopCount, interval) => {
     let issueKey = await requestBody('Story').then(createIssue).then(res => res['key'])
-    await updateIssue(summary, issueKey)
-    let body = {"name": sprint, "originBoardId": boardId}
-    let sprintId = await createSprint(body).then(res => res['id'])
-    await addIssuesToSprint(sprintId, [issueKey]);
+    await updateIssue(issueKey, summary)
+    if (!sprint) {
+        console.log(`will create new sprint because sprint arg is ${sprint}`)
+        sprint = await createSprint({"name": defaultSprintName, "originBoardId": boardId}
+      ).then(res => res['id'])
+    }
+    await addIssuesToSprint(sprint, [issueKey]);
+    await sleep(interval);
+    let transitionsResult = await getStatusTransitions(issueKey);
+    var transitions = transitionsResult['transitions'].filter((obj) => {
+        return obj['name'] === 'Done';
+      });
+    await transitionIssue(issueKey, transitions[0]['id'])
     await sleep(interval);
     for(let i = 0; i < loopCount; i++){
-      await moveIssuesToBacklog([issueKey]);
-      await updateIssue(summary + i, issueKey);
-      await addIssuesToSprint(sprintId, [issueKey]);
+      moveIssuesToBacklog([issueKey]);
+      await sleep(250);
+      updateIssue(summary + i, issueKey);
+      await sleep(250);
+      addIssuesToSprint(sprint, [issueKey]);
+      await sleep(1000);
     }
 }
 
@@ -286,8 +360,8 @@ const argv = require('yargs')
         .positional('jiraUrl', { describe: 'Jira url'})
         .positional('projectKey', {describe: 'Jira project key'})
         .positional('summary', {describe: 'issue summary, e.g. BadBug'})
-        .positional('sprint', {describe: 'sprint name, e.g. Sprint1'})
         .positional('board', {describe: 'board id, see status bar when hover over Configure menu in boards'})
+        .positional('sprint', {describe: 'sprint id, e.g. 42, if null, new sprint will be created', default: null})
         .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint', default: 0})
         .positional('interval', {describe: 'interval in ms between update requests', default: 10000})
     }, (argv) => {
