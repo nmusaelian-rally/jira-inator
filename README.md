@@ -64,5 +64,4 @@ Positionals:
   sprint      sprint id, e.g. 42, if null, new sprint will be created     [default: null]
   loop        how many times to rename, add and remove issue from sprint  [default: 0]
   interval    interval in ms between update requests                      [default: 10000]
-
 ```

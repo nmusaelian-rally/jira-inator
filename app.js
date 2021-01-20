@@ -130,31 +130,6 @@ const createIssue = async (body = {}) => {
     }
   }
 
-/*   const updateIssue = async (issueKey, newSummary, newStatusId=null) => {
-    console.log(`updating issue ${issueKey}`)
-    try{
-        let updateUrl = `${jiraURLs.baseUrl}/${issueKey}`;
-        let data = {"fields": {"summary": newSummary}};
-        if (newStatusId) {
-            data["transition"] = {
-                "id": newStatusId
-            }
-            console.log(`data: ${JSON.stringify(data)}`);
-        }
-        const response = await fetch(updateUrl, {
-            method: 'PUT', 
-            mode: 'cors', 
-            cache: 'no-cache', 
-            credentials: 'same-origin', 
-            headers: headers,
-            body: JSON.stringify(data)
-          });
-        return response.text();  
-    } catch(err){
-        console.log(err);
-    }
-  } */
-
   const updateIssue = async (issueKey, newSummary) => {
     console.log(`updating issue ${issueKey}`)
     try{
@@ -268,6 +243,7 @@ const bulkDeleteIssues = async (start, end) => {
 const addIssuesToSprint = async (sprintId, storyKeys) => {
     try{
         console.log(`adding issues ${storyKeys} to sprint ${sprintId}`)
+
         let url = `${jiraURLs.sprintBaseUrl}/${sprintId}/issue`;
         let data = {"issues": storyKeys};
           const response = await fetch(url, {
@@ -360,6 +336,7 @@ const argv = require('yargs')
         .positional('jiraUrl', { describe: 'Jira url'})
         .positional('projectKey', {describe: 'Jira project key'})
         .positional('summary', {describe: 'issue summary, e.g. BadBug'})
+
         .positional('board', {describe: 'board id, see status bar when hover over Configure menu in boards'})
         .positional('sprint', {describe: 'sprint id, e.g. 42, if null, new sprint will be created', default: null})
         .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint', default: 0})
