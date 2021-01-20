@@ -322,7 +322,7 @@ const createAndUpdateIssue = async (summary, sprint, boardId, loopCount, interva
     for(let i = 0; i < loopCount; i++){
       moveIssuesToBacklog([issueKey]);
       await sleep(250);
-      updateIssue(summary + i, issueKey);
+      updateIssue(issueKey, summary + i, );
       await sleep(250);
       addIssuesToSprint(sprint, [issueKey]);
       await sleep(1000);
