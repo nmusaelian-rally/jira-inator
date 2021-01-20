@@ -54,7 +54,6 @@ const saveIssueInfo = async (issueType) => {
 }
 
 const getStatusTransitions = async (issueKey) => {
-    //rest/api/2/issue/${issueIdOrKey}/transitions
     let url = `${jiraURLs.baseUrl}/${issueKey}/transitions`
     try{
         const response = await fetch(url, {
@@ -336,7 +335,6 @@ const argv = require('yargs')
         .positional('jiraUrl', { describe: 'Jira url'})
         .positional('projectKey', {describe: 'Jira project key'})
         .positional('summary', {describe: 'issue summary, e.g. BadBug'})
-
         .positional('board', {describe: 'board id, see status bar when hover over Configure menu in boards'})
         .positional('sprint', {describe: 'sprint id, e.g. 42, if null, new sprint will be created', default: null})
         .positional('loop', {describe: 'how many times to rename, add and remove issue from sprint', default: 0})
